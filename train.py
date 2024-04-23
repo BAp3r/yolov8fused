@@ -3,21 +3,31 @@ warnings.filterwarnings('ignore')
 from ultralytics import YOLO
 
 if __name__ == '__main__':
-    model = YOLO('ultralytics/cfg/models/v8/yolov8-MobileNetV3.yaml')
-    # model.load('yolov8n.pt') # 是否加载预训练权重,科研不建议大家加载否则很难提升精度
-    model.train(data=r'./ultralytics/cfg/datasets/data.yaml',
-                # 如果大家任务是其它的'ultralytics/cfg/default.yaml'找到这里修改task可以改成detect, segment, classify, pose
-                cache=False,
+    model = YOLO('ultralytics/cfg/models/v8/yolov8-RepViT-BiFPN.yaml')
+    # model.load('yolov8n.pt')
+
+    # model = YOLO('ultralytics/cfg/models/v8/yolov8-pose.yaml')   # 关键点检测
+    # model.load('yolov8n-pose.pt')
+    
+    model.train(data='ultralytics/cfg/datasets/bdd100k.yaml',
+                epochs=100,
+                batch=2,
+                workers=2,
+                project='runs/train',
+                name='yolov8-debug',
+                amp=True,
+                cache=True,
                 imgsz=640,
-                epochs=150,
-                single_cls=True,  # 是否是单类别检测
-                batch=16,
+                # cfg='ultralytics/cfg/cfg-low.yaml',
+                # resume='',
+                # single_cls=True,
                 close_mosaic=10,
-                workers=0,
                 device='0',
-                optimizer='SGD', # using SGD
-                # resume='', # 如过想续训就设置last.pt的地址
-                amp=False,  # 如果出现训练损失为Nan可以关闭amp
-                project='/tf_logs/train',
-                name='v8_MobileNetV3',
+                optimizer='Lion',
+                seed=0,
+                deterministic=True,
+                #50步保存一次
+                save_period=50,
                 )
+    
+    

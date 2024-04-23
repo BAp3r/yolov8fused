@@ -3,13 +3,13 @@ warnings.filterwarnings('ignore')
 from ultralytics import YOLO
 
 if __name__ == '__main__':
-    model = YOLO('你想要验证模型的权重地址')
-    model.val(data='替换你数据的yaml文件地址',
+    model = YOLO(r'C:\PostGraduate\Fish\YOLO\ultralytics\runs\train\yolov8-pose\weights\best.pt')
+    model.val(data='ultralytics/cfg/datasets/data-pose.yaml',
               split='val',
               imgsz=640,
               batch=16,
               # rect=False,
-              # save_json=True, # 这个保存coco精度指标的开关
+              # save_json=True,
               project='runs/val',
-              name='exp',
+              name='yolov8-pose',
               )

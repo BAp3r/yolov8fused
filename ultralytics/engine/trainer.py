@@ -47,6 +47,7 @@ from ultralytics.utils.torch_utils import (
     one_cycle,
     select_device,
     strip_optimizer,
+    Lion,
 )
 
 
@@ -742,6 +743,8 @@ class BaseTrainer:
             optimizer = optim.RMSprop(g[2], lr=lr, momentum=momentum)
         elif name == "SGD":
             optimizer = optim.SGD(g[2], lr=lr, momentum=momentum, nesterov=True)
+        elif name == 'Lion':
+            optimizer = Lion(g[2], lr=lr, betas=(momentum, 0.999), weight_decay=decay)
         else:
             raise NotImplementedError(
                 f"Optimizer '{name}' not found in list of available optimizers "
