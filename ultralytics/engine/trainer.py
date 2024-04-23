@@ -41,13 +41,13 @@ from ultralytics.utils.dist import ddp_cleanup, generate_ddp_command
 from ultralytics.utils.files import get_latest_run
 from ultralytics.utils.torch_utils import (
     EarlyStopping,
+    Lion,
     ModelEMA,
     de_parallel,
     init_seeds,
     one_cycle,
     select_device,
     strip_optimizer,
-    Lion,
 )
 
 
@@ -743,7 +743,7 @@ class BaseTrainer:
             optimizer = optim.RMSprop(g[2], lr=lr, momentum=momentum)
         elif name == "SGD":
             optimizer = optim.SGD(g[2], lr=lr, momentum=momentum, nesterov=True)
-        elif name == 'Lion':
+        elif name == "Lion":
             optimizer = Lion(g[2], lr=lr, betas=(momentum, 0.999), weight_decay=decay)
         else:
             raise NotImplementedError(

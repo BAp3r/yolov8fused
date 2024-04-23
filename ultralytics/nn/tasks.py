@@ -3,8 +3,7 @@
 import contextlib
 from copy import deepcopy
 from pathlib import Path
-from .modules.RepViT import repvit_m0_6, repvit_m0_9, repvit_m1_0, repvit_m1_1, repvit_m1_5, repvit_m2_3
-from .modules.BiFPN import Bi_FPN
+
 import torch
 import torch.nn as nn
 
@@ -16,14 +15,17 @@ from ultralytics.nn.modules import (
     C3TR,
     OBB,
     SPP,
+    SPPELAN,
     SPPF,
+    ADown,
     Bottleneck,
     BottleneckCSP,
     C2f,
     C2fAttn,
-    ImagePoolingAttn,
     C3Ghost,
     C3x,
+    CBFuse,
+    CBLinear,
     Classify,
     Concat,
     Conv,
@@ -37,19 +39,16 @@ from ultralytics.nn.modules import (
     GhostConv,
     HGBlock,
     HGStem,
+    ImagePoolingAttn,
     Pose,
     RepC3,
     RepConv,
+    RepNCSPELAN4,
     ResNetLayer,
     RTDETRDecoder,
     Segment,
-    WorldDetect,
-    RepNCSPELAN4,
-    ADown,
-    SPPELAN,
-    CBFuse,
-    CBLinear,
     Silence,
+    WorldDetect,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -65,6 +64,9 @@ from ultralytics.utils.torch_utils import (
     scale_img,
     time_sync,
 )
+
+from .modules.BiFPN import Bi_FPN
+from .modules.RepViT import repvit_m0_6, repvit_m0_9, repvit_m1_0, repvit_m1_1, repvit_m1_5, repvit_m2_3
 
 try:
     import thop
@@ -110,6 +112,7 @@ class BaseModel(nn.Module):
     def _predict_once(self, x, profile=False, visualize=False, embed=None):
         """
         Perform a forward pass through the network.
+
         Args:
             x (torch.Tensor): The input tensor to the model.
             profile (bool):  Print the computation time of each layer if True, defaults to False.
@@ -123,7 +126,7 @@ class BaseModel(nn.Module):
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
-            if hasattr(m, 'backbone'):
+            if hasattr(m, "backbone"):
                 x = m(x)
                 if len(x) != 5:  # 0 - 5
                     x.insert(0, None)
@@ -931,15 +934,17 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             m_.backbone = True
         else:
             m_ = nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
-            t = str(m)[8:-2].replace('__main__.', '')  # module type
+            t = str(m)[8:-2].replace("__main__.", "")  # module type
 
         m.np = sum(x.numel() for x in m_.parameters())  # number params
         m_.i, m_.f, m_.type = i + 4 if backbone else i, f, t  # attach index, 'from' index, type
 
         if verbose:
-            LOGGER.info(f'{i:>3}{str(f):>20}{n_:>3}{m.np:10.0f}  {t:<45}{str(args):<30}')  # print
+            LOGGER.info(f"{i:>3}{str(f):>20}{n_:>3}{m.np:10.0f}  {t:<45}{str(args):<30}")  # print
 
-        save.extend(x % (i + 4 if backbone else i) for x in ([f] if isinstance(f, int) else f) if x != -1)  # append to savelist
+        save.extend(
+            x % (i + 4 if backbone else i) for x in ([f] if isinstance(f, int) else f) if x != -1
+        )  # append to savelist
         layers.append(m_)
         if i == 0:
             ch = []
