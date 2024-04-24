@@ -10,4 +10,6 @@ from ultralytics import YOLO
 model = YOLO("yolov8custom.pt")
 
 # Run Ray Tune on the model
-result_grid = model.tune(data="bdd100k.yaml", space={"lr0": tune.uniform(1e-5, 1e-1)}, epochs=50, use_ray=True)
+result_grid = model.tune(data="bdd100k.yaml", 
+                         space={"lr0": tune.uniform(1e-5, 1e-1)}, 
+                         epochs=20, use_ray=True)
